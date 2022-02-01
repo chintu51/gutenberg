@@ -7,33 +7,93 @@
  */
 
 class WP_Block_Supports_Border_Test extends WP_UnitTestCase {
-
-	function test_border_color_slug_with_numbers_is_kebab_cased_properly() {
-		$block_name = 'test/border-color-slug-with-numbers-is-kebab-cased-properly';
+	/**
+	 * Registers a new block for testing border support.
+	 *
+	 * @param string $block_name Name for the test block.
+	 * @param array  $supports   Array defining block support configuration.
+	 *
+	 * @return WP_Block_Type The block type for the newly registered test block.
+	 */
+	private function register_bordered_block_with_support( $block_name, $supports = array() ) {
 		register_block_type(
 			$block_name,
 			array(
 				'api_version' => 2,
 				'attributes'  => array(
-					'borderColor' => array(
+					'borderColor'      => array(
 						'type' => 'string',
 					),
-					'style'       => array(
+					'sideBorderColors' => array(
+						'type' => 'object',
+					),
+					'style'            => array(
 						'type' => 'object',
 					),
 				),
-				'supports'    => array(
-					'__experimentalBorder' => array(
-						'color'  => true,
-						'radius' => true,
-						'width'  => true,
-						'style'  => true,
-					),
+				'supports'    => $supports,
+			)
+		);
+		$registry = WP_Block_Type_Registry::get_instance();
+
+		return $registry->get_registered( $block_name );
+	}
+
+	function test_border_object_with_no_styles() {
+		$block_name  = 'test/border-object-with-no-styles';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color'  => true,
+					'radius' => true,
+					'width'  => true,
+					'style'  => true,
 				),
 			)
 		);
-		$registry   = WP_Block_Type_Registry::get_instance();
-		$block_type = $registry->get_registered( $block_name );
+		$block_attrs = array( 'style' => array( 'border' => array() ) );
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array();
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_border_object_with_invalid_style_prop() {
+		$block_name  = 'test/border-object-with-invalid-style-prop';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color'  => true,
+					'radius' => true,
+					'width'  => true,
+					'style'  => true,
+				),
+			)
+		);
+		$block_attrs = array( 'style' => array( 'border' => array( 'invalid' => '10px' ) ) );
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array();
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_border_color_slug_with_numbers_is_kebab_cased_properly() {
+		$block_name = 'test/border-color-slug-with-numbers-is-kebab-cased-properly';
+		$block_type = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color'  => true,
+					'radius' => true,
+					'width'  => true,
+					'style'  => true,
+				),
+			)
+		);
 		$block_atts = array(
 			'borderColor' => 'red',
 			'style'       => array(
@@ -55,30 +115,20 @@ class WP_Block_Supports_Border_Test extends WP_UnitTestCase {
 		unregister_block_type( $block_name );
 	}
 
-	function test_border_with_skipped_serialization_block_supports() {
-		$block_name = 'test/border-with-skipped-serialization-block-supports';
-		register_block_type(
+	function test_flat_border_with_skipped_serialization() {
+		$block_name = 'test/flat-border-with-skipped-serialization';
+		$block_type = self::register_bordered_block_with_support(
 			$block_name,
 			array(
-				'api_version' => 2,
-				'attributes'  => array(
-					'style' => array(
-						'type' => 'object',
-					),
-				),
-				'supports'    => array(
-					'__experimentalBorder' => array(
-						'color'                           => true,
-						'radius'                          => true,
-						'width'                           => true,
-						'style'                           => true,
-						'__experimentalSkipSerialization' => true,
-					),
+				'__experimentalBorder' => array(
+					'color'                           => true,
+					'radius'                          => true,
+					'width'                           => true,
+					'style'                           => true,
+					'__experimentalSkipSerialization' => true,
 				),
 			)
 		);
-		$registry   = WP_Block_Type_Registry::get_instance();
-		$block_type = $registry->get_registered( $block_name );
 		$block_atts = array(
 			'style' => array(
 				'border' => array(
@@ -97,30 +147,20 @@ class WP_Block_Supports_Border_Test extends WP_UnitTestCase {
 		unregister_block_type( $block_name );
 	}
 
-	function test_radius_with_individual_skipped_serialization_block_supports() {
-		$block_name = 'test/radius-with-individual-skipped-serialization-block-supports';
-		register_block_type(
+	function test_flat_border_with_individual_skipped_serialization() {
+		$block_name = 'test/flat-border-with-individual-skipped-serialization';
+		$block_type = self::register_bordered_block_with_support(
 			$block_name,
 			array(
-				'api_version' => 2,
-				'attributes'  => array(
-					'style' => array(
-						'type' => 'object',
-					),
-				),
-				'supports'    => array(
-					'__experimentalBorder' => array(
-						'color'                           => true,
-						'radius'                          => true,
-						'width'                           => true,
-						'style'                           => true,
-						'__experimentalSkipSerialization' => array( 'radius', 'color' ),
-					),
+				'__experimentalBorder' => array(
+					'color'                           => true,
+					'radius'                          => true,
+					'width'                           => true,
+					'style'                           => true,
+					'__experimentalSkipSerialization' => array( 'radius', 'color' ),
 				),
 			)
 		);
-		$registry   = WP_Block_Type_Registry::get_instance();
-		$block_type = $registry->get_registered( $block_name );
 		$block_atts = array(
 			'style' => array(
 				'border' => array(
@@ -135,6 +175,301 @@ class WP_Block_Supports_Border_Test extends WP_UnitTestCase {
 		$actual   = gutenberg_apply_border_support( $block_type, $block_atts );
 		$expected = array(
 			'style' => 'border-style: dotted; border-width: 1px;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_split_border_radius() {
+		$block_name  = 'test/split-border-radius';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'radius' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'radius' => array(
+						'topLeft'     => '1em',
+						'topRight'    => '2rem',
+						'bottomLeft'  => '30px',
+						'bottomRight' => '4vh',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'style' => 'border-top-left-radius: 1em; border-top-right-radius: 2rem; border-bottom-left-radius: 30px; border-bottom-right-radius: 4vh;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_flat_border_with_custom_color() {
+		$block_name  = 'test/flat-border-with-custom-color';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color' => true,
+					'width' => true,
+					'style' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'color' => '#72aee6',
+					'width' => '2px',
+					'style' => 'dashed',
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'class' => 'has-border-color',
+			'style' => 'border-style: dashed; border-width: 2px; border-color: #72aee6;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_split_borders_with_custom_colors() {
+		$block_name  = 'test/split-borders-with-custom-colors';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color' => true,
+					'width' => true,
+					'style' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'top'    => array(
+						'color' => '#72aee6',
+						'width' => '2px',
+						'style' => 'dashed',
+					),
+					'right'  => array(
+						'color' => '#e65054',
+						'width' => '0.25rem',
+						'style' => 'dotted',
+					),
+					'bottom' => array(
+						'color' => '#007017',
+						'width' => '0.5em',
+						'style' => 'solid',
+					),
+					'left'   => array(
+						'color' => '#f6f7f7',
+						'width' => '1px',
+						'style' => 'solid',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'class' => 'has-border-top-color has-border-right-color has-border-bottom-color has-border-left-color',
+			'style' => 'border-top-width: 2px; border-top-style: dashed; border-top-color: #72aee6; border-right-width: 0.25rem; border-right-style: dotted; border-right-color: #e65054; border-bottom-width: 0.5em; border-bottom-style: solid; border-bottom-color: #007017; border-left-width: 1px; border-left-style: solid; border-left-color: #f6f7f7;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_split_borders_with_skipped_serialization() {
+		$block_name  = 'test/split-borders-with-skipped-serialization';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color'                           => true,
+					'width'                           => true,
+					'style'                           => true,
+					'__experimentalSkipSerialization' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'top'    => array(
+						'color' => '#72aee6',
+						'width' => '2px',
+						'style' => 'dashed',
+					),
+					'right'  => array(
+						'color' => '#e65054',
+						'width' => '0.25rem',
+						'style' => 'dotted',
+					),
+					'bottom' => array(
+						'color' => '#007017',
+						'width' => '0.5em',
+						'style' => 'solid',
+					),
+					'left'   => array(
+						'color' => '#f6f7f7',
+						'width' => '1px',
+						'style' => 'solid',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array();
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_split_borders_with_skipped_individual_feature_serialization() {
+		$block_name  = 'test/split-borders-with-skipped-individual-feature-serialization';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color'                           => true,
+					'width'                           => true,
+					'style'                           => true,
+					'__experimentalSkipSerialization' => array( 'width', 'style' ),
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'top'    => array(
+						'color' => '#72aee6',
+						'width' => '2px',
+						'style' => 'dashed',
+					),
+					'right'  => array(
+						'color' => '#e65054',
+						'width' => '0.25rem',
+						'style' => 'dotted',
+					),
+					'bottom' => array(
+						'color' => '#007017',
+						'width' => '0.5em',
+						'style' => 'solid',
+					),
+					'left'   => array(
+						'color' => '#f6f7f7',
+						'width' => '1px',
+						'style' => 'solid',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'class' => 'has-border-top-color has-border-right-color has-border-bottom-color has-border-left-color',
+			'style' => 'border-top-color: #72aee6; border-right-color: #e65054; border-bottom-color: #007017; border-left-color: #f6f7f7;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_partial_split_borders() {
+		$block_name  = 'test/partial-split-borders';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color' => true,
+					'width' => true,
+					'style' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'style' => array(
+				'border' => array(
+					'top'   => array(
+						'color' => '#72aee6',
+						'width' => '2px',
+						'style' => 'dashed',
+					),
+					'right' => array(
+						'color' => '#e65054',
+						'width' => '0.25rem',
+					),
+					'left'  => array(
+						'style' => 'solid',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'class' => 'has-border-top-color has-border-right-color',
+			'style' => 'border-top-width: 2px; border-top-style: dashed; border-top-color: #72aee6; border-right-width: 0.25rem; border-right-color: #e65054; border-left-style: solid;',
+		);
+
+		$this->assertSame( $expected, $actual );
+		unregister_block_type( $block_name );
+	}
+
+	function test_split_borders_with_named_colors() {
+		$block_name  = 'test/split-borders-with-named-colors';
+		$block_type  = self::register_bordered_block_with_support(
+			$block_name,
+			array(
+				'__experimentalBorder' => array(
+					'color' => true,
+					'width' => true,
+					'style' => true,
+				),
+			)
+		);
+		$block_attrs = array(
+			'sideBorderColors' => array(
+				'top'    => 'red',
+				'right'  => 'green',
+				'bottom' => 'blue',
+				'left'   => 'yellow',
+			),
+			'style'            => array(
+				'border' => array(
+					'top'    => array(
+						'width' => '2px',
+						'style' => 'dashed',
+					),
+					'right'  => array(
+						'width' => '0.25rem',
+						'style' => 'dotted',
+					),
+					'bottom' => array(
+						'width' => '0.5em',
+						'style' => 'solid',
+					),
+					'left'   => array(
+						'width' => '1px',
+						'style' => 'solid',
+					),
+				),
+			),
+		);
+		$actual      = gutenberg_apply_border_support( $block_type, $block_attrs );
+		$expected    = array(
+			'class' => 'has-border-top-color has-red-border-top-color has-border-right-color has-green-border-right-color has-border-bottom-color has-blue-border-bottom-color has-border-left-color has-yellow-border-left-color',
+			'style' => 'border-top-width: 2px; border-top-style: dashed; border-right-width: 0.25rem; border-right-style: dotted; border-bottom-width: 0.5em; border-bottom-style: solid; border-left-width: 1px; border-left-style: solid;',
 		);
 
 		$this->assertSame( $expected, $actual );
