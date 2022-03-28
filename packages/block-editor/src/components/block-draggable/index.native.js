@@ -111,7 +111,7 @@ const BlockDraggableWrapper = ( { children } ) => {
 		draggingScrollHandler( event );
 	};
 
-	const { onBlockDragOver, onBlockDragEnd } = useBlockDropZone();
+	const { onBlockDragOver, onBlockDragEnd, onBlockDrop } = useBlockDropZone();
 
 	// Stop dragging blocks if the block draggable is unmounted.
 	useEffect( () => {
@@ -122,7 +122,7 @@ const BlockDraggableWrapper = ( { children } ) => {
 		};
 	}, [] );
 
-	const setupDraggingBlock = ( position ) => {
+	const onStartDragging = ( position ) => {
 		const blockLayout = findBlockLayoutByPosition( blocksLayouts.current, {
 			x: position.x,
 			y: position.y + scroll.offsetY.value,
@@ -156,6 +156,18 @@ const BlockDraggableWrapper = ( { children } ) => {
 		}
 	};
 
+	const onStopDragging = () => {
+		if ( currentClientId.current ) {
+			onBlockDrop( {
+				srcRootClientId: '',
+				srcClientIds: [ currentClientId.current ],
+				type: 'block',
+			} );
+		}
+		onBlockDragEnd();
+		stopDraggingBlocks();
+	};
+
 	// This hook is used for animating the scroll via a shared value.
 	useAnimatedReaction(
 		() => scrollAnimation.value,
@@ -180,7 +192,7 @@ const BlockDraggableWrapper = ( { children } ) => {
 		isDragging.value = true;
 
 		chip.scale.value = withTiming( 1 );
-		runOnJS( setupDraggingBlock )( dragPosition );
+		runOnJS( onStartDragging )( dragPosition );
 	};
 
 	const updateDragging = ( { x, y } ) => {
@@ -203,9 +215,8 @@ const BlockDraggableWrapper = ( { children } ) => {
 		hasStartedDraggingOver.value = false;
 
 		chip.scale.value = withTiming( 0 );
-		runOnJS( onBlockDragEnd )();
-		runOnJS( stopDraggingBlocks )();
 		stopScrolling();
+		runOnJS( onStopDragging )();
 	};
 
 	const chipDynamicStyles = useAnimatedStyle( () => {
@@ -230,12 +241,10 @@ const BlockDraggableWrapper = ( { children } ) => {
 
 	return (
 		<>
-			{
-				<DroppingInsertionPoint
-					scroll={ scroll }
-					hasStartedDraggingOver={ hasStartedDraggingOver }
-				/>
-			}
+			<DroppingInsertionPoint
+				scroll={ scroll }
+				hasStartedDraggingOver={ hasStartedDraggingOver }
+			/>
 			<Draggable
 				onDragStart={ startDragging }
 				onDragOver={ updateDragging }
