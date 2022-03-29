@@ -337,19 +337,6 @@ function CoverEdit( {
 	const mediaUrl = media?.source_url;
 
 	useEffect( () => {
-		// If the useFeaturedImage attribute is set
-		// but there is no featured media on the post
-		// we reset the media
-		if ( useFeaturedImage && ! mediaUrl ) {
-			setAttributes( {
-				url: undefined,
-				id: undefined,
-				backgroundType: undefined,
-				focalPoint: undefined,
-				hasParallax: undefined,
-				isRepeated: undefined,
-			} );
-		}
 		if ( useFeaturedImage ) {
 			setAttributes( {
 				dimRatio: dimRatio === 100 ? 50 : dimRatio,
