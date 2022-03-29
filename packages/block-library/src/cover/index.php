@@ -29,7 +29,7 @@ function render_block_core_cover( $attributes, $content ) {
 	if( $isImageBackground && ! $isImgElement ) {
 		$content = preg_replace(
 			'/class=\".*?\"/',
-			'${0} style="background-image:url(' . $currentFeaturedImage . ')"',
+			'${0} style="background-image:url(' . esc_url( $currentFeaturedImage ) . ')"',
 			$content,
 			1
 		);
