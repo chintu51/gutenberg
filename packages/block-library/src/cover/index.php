@@ -54,7 +54,7 @@ function render_block_core_cover( $attributes, $content ) {
 
 		$image = sprintf(
 			$image_template,
-			$attributes['alt'],
+			get_the_post_thumbnail_caption(),
 			$currentFeaturedImage,
 			$objectPosition,
 			$objectPosition

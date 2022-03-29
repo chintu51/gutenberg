@@ -306,7 +306,6 @@ function CoverEdit( {
 		contentPosition,
 		id,
 		useFeaturedImage,
-		backgroundType,
 		dimRatio,
 		focalPoint,
 		hasParallax,
@@ -315,17 +314,12 @@ function CoverEdit( {
 		minHeight,
 		minHeightUnit,
 		style: styleAttribute,
-		url,
 		alt,
 		allowedBlocks,
 		templateLock,
 	} = attributes;
 
-	const coverImage = useRef( {
-		url,
-		type: backgroundType,
-		isFeaturedImage: useFeaturedImage,
-	} );
+	let { url, backgroundType } = attributes;
 
 	const [ featuredImage ] = useEntityProp(
 		'postType',
@@ -343,15 +337,6 @@ function CoverEdit( {
 	const mediaUrl = media?.source_url;
 
 	useEffect( () => {
-		// Save the currently set image
-		if ( useFeaturedImage && url ) {
-			coverImage.current = {
-				url,
-				type: backgroundType,
-				isFeaturedImage: false,
-			};
-		}
-
 		// If the useFeaturedImage attribute is set
 		// but there is no featured media on the post
 		// we reset the media
@@ -365,30 +350,19 @@ function CoverEdit( {
 				isRepeated: undefined,
 			} );
 		}
-
-		// The featured image is in use and it has changed
-		if ( mediaUrl && mediaUrl !== url && useFeaturedImage ) {
-			onSelectMedia( {
-				url: mediaUrl,
-				type: IMAGE_BACKGROUND_TYPE,
-				isFeaturedImage: true,
+		if ( useFeaturedImage ) {
+			setAttributes( {
+				dimRatio: dimRatio === 100 ? 50 : dimRatio,
 			} );
 		}
-		// We don't use the featured image
-		// so we reset the URL only if it is
-		// the url of the featured image.
-		// This is needed to not reset the url
-		// when a new image is selected from the
-		// media library.
-		if ( mediaUrl && ! useFeaturedImage && mediaUrl === url ) {
-			setAttributes( { url: null } );
-		}
-		// Use the initial image, if set, if featuref image
-		// is toggled off, but respect if cleared media
-		if ( url && ! useFeaturedImage && coverImage.current ) {
-			onSelectMedia( coverImage.current );
-		}
-	}, [ mediaUrl, useFeaturedImage ] );
+	}, [ useFeaturedImage ] );
+
+	// hijack the url for edit preview
+	// of the dynamic featured image
+	if ( useFeaturedImage && mediaUrl ) {
+		url = mediaUrl;
+		backgroundType = IMAGE_BACKGROUND_TYPE;
+	}
 
 	const { __unstableMarkNextChangeAsNotPersistent } = useDispatch(
 		blockEditorStore
@@ -540,7 +514,7 @@ function CoverEdit( {
 			<BlockControls group="other">
 				{ !! postId && (
 					<ToolbarButton
-						icon={ postFeaturedImage /*this is temporary*/ }
+						icon={ postFeaturedImage }
 						label={ __( 'Use featured image' ) }
 						isPressed={ useFeaturedImage }
 						onClick={ () => {
@@ -591,27 +565,32 @@ function CoverEdit( {
 								}
 							/>
 						) }
-						{ url && isImageBackground && isImgElement && (
-							<TextareaControl
-								label={ __( 'Alt text (alternative text)' ) }
-								value={ alt }
-								onChange={ ( newAlt ) =>
-									setAttributes( { alt: newAlt } )
-								}
-								help={
-									<>
-										<ExternalLink href="https://www.w3.org/WAI/tutorials/images/decision-tree">
+						{ ! useFeaturedImage &&
+							url &&
+							isImageBackground &&
+							isImgElement && (
+								<TextareaControl
+									label={ __(
+										'Alt text (alternative text)'
+									) }
+									value={ alt }
+									onChange={ ( newAlt ) =>
+										setAttributes( { alt: newAlt } )
+									}
+									help={
+										<>
+											<ExternalLink href="https://www.w3.org/WAI/tutorials/images/decision-tree">
+												{ __(
+													'Describe the purpose of the image'
+												) }
+											</ExternalLink>
 											{ __(
-												'Describe the purpose of the image'
+												'Leave empty if the image is purely decorative.'
 											) }
-										</ExternalLink>
-										{ __(
-											'Leave empty if the image is purely decorative.'
-										) }
-									</>
-								}
-							/>
-						) }
+										</>
+									}
+								/>
+							) }
 						<PanelRow>
 							<Button
 								variant="secondary"

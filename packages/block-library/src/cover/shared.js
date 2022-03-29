@@ -68,9 +68,6 @@ export function attributesFromMedia( setAttributes, dimRatio ) {
 			url: media.url,
 			id: media.id,
 			alt: media?.alt,
-			useFeaturedImage: media?.isFeaturedImage
-				? media?.isFeaturedImage
-				: false,
 			backgroundType: mediaType,
 			...( mediaType === VIDEO_BACKGROUND_TYPE
 				? { focalPoint: undefined, hasParallax: undefined }
