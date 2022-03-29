@@ -55,9 +55,9 @@ function render_block_core_cover( $attributes, $content ) {
 		$image = sprintf(
 			$image_template,
 			get_the_post_thumbnail_caption(),
-			$currentFeaturedImage,
-			$objectPosition,
-			$objectPosition
+			esc_url( $currentFeaturedImage ),
+			esc_attr( $objectPosition ),
+			esc_attr( $objectPosition )
 		);
 
 		$content = str_replace(
