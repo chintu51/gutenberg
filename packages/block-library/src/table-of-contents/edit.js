@@ -199,6 +199,7 @@ export default function TableOfContentsEdit( {
 						replaceBlocks(
 							clientId,
 							createBlock( 'core/list', {
+								ordered: true,
 								values: renderToString(
 									<TableOfContentsList
 										nestedHeadingList={ headingTree }
