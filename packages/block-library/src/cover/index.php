@@ -6,7 +6,7 @@
  */
 
 /**
- * Renders the `core/categories` block on server.
+ * Renders the `core/cover` block on server.
  *
  * @param array $attributes The block attributes.
  *
