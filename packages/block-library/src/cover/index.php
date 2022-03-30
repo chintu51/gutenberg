@@ -72,7 +72,7 @@ function render_block_core_cover( $attributes, $content ) {
 }
 
 /**
- * Registers the `core/categories` block on server.
+ * Registers the `core/cover` block on server.
  */
 function register_block_core_cover() {
 	register_block_type_from_metadata(
