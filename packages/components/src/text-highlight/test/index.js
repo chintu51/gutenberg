@@ -1,8 +1,12 @@
 /**
  * External dependencies
  */
-import { render, unmountComponentAtNode } from 'react-dom';
 import { act } from 'react-dom/test-utils';
+
+/**
+ * WordPress dependencies
+ */
+import { createRoot } from '@wordpress/element';
 
 /**
  * Internal dependencies
@@ -10,16 +14,23 @@ import { act } from 'react-dom/test-utils';
 import TextHighlight from '../index';
 
 let container = null;
+let root = null;
 
 beforeEach( () => {
 	// Setup a DOM element as a render target.
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
+	root = createRoot( container );
+
+	// This is needed due to some kind of bug in JSDOM that conflicts with React 18.
+	global.IS_REACT_ACT_ENVIRONMENT = true;
 } );
 
 afterEach( () => {
 	// Cleanup on exiting.
-	unmountComponentAtNode( container );
+	act( () => {
+		root.unmount();
+	} );
 	container.remove();
 	container = null;
 } );
@@ -32,12 +43,11 @@ describe( 'Basic rendering', () => {
 		'should highlight the singular occurance of the text "%s" in the text if it exists',
 		( highlight ) => {
 			act( () => {
-				render(
+				root.render(
 					<TextHighlight
 						text={ defaultText }
 						highlight={ highlight }
-					/>,
-					container
+					/>
 				);
 			} );
 
@@ -57,9 +67,8 @@ describe( 'Basic rendering', () => {
 		const highlight = 'edit';
 
 		act( () => {
-			render(
-				<TextHighlight text={ defaultText } highlight={ highlight } />,
-				container
+			root.render(
+				<TextHighlight text={ defaultText } highlight={ highlight } />
 			);
 		} );
 
@@ -80,9 +89,8 @@ describe( 'Basic rendering', () => {
 		const highlight = 'The'; // Note this occurs in both sentance of lowercase forms.
 
 		act( () => {
-			render(
-				<TextHighlight text={ defaultText } highlight={ highlight } />,
-				container
+			root.render(
+				<TextHighlight text={ defaultText } highlight={ highlight } />
 			);
 		} );
 
@@ -105,9 +113,8 @@ describe( 'Basic rendering', () => {
 		const highlight = 'Antidisestablishmentarianism';
 
 		act( () => {
-			render(
-				<TextHighlight text={ defaultText } highlight={ highlight } />,
-				container
+			root.render(
+				<TextHighlight text={ defaultText } highlight={ highlight } />
 			);
 		} );
 

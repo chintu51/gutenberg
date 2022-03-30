@@ -3,14 +3,17 @@
  */
 import { filter, map } from 'lodash';
 import TestUtils, { act } from 'react-dom/test-utils';
-import ReactDOM from 'react-dom';
+
+/**
+ * WordPress dependencies
+ */
+import { createRoot } from '@wordpress/element';
 
 /**
  * Internal dependencies
  */
 import fixtures from './lib/fixtures';
 import TokenFieldWrapper from './lib/token-field-wrapper';
-import TokenInput from '../token-input';
 
 /**
  * Module variables
@@ -32,7 +35,9 @@ const charCodes = {
 };
 
 describe( 'FormTokenField', () => {
-	let wrapper, wrapperElement, textInputElement, textInputComponent;
+	let textInputElement;
+	let wrapperElement;
+	let wrapperRef;
 
 	function setText( text ) {
 		TestUtils.Simulate.change( textInputElement(), {
@@ -40,6 +45,7 @@ describe( 'FormTokenField', () => {
 				value: text,
 			},
 		} );
+		jest.runAllTimers();
 	}
 
 	function sendKeyDown( keyCode, shiftKey ) {
@@ -47,10 +53,12 @@ describe( 'FormTokenField', () => {
 			keyCode,
 			shiftKey: !! shiftKey,
 		} );
+		jest.runAllTimers();
 	}
 
 	function sendKeyPress( charCode ) {
 		TestUtils.Simulate.keyPress( wrapperElement(), { charCode } );
+		jest.runAllTimers();
 	}
 
 	function getTokensHTML() {
@@ -96,37 +104,38 @@ describe( 'FormTokenField', () => {
 	}
 
 	function setUp( props ) {
-		wrapper = TestUtils.renderIntoDocument(
-			<TokenFieldWrapper { ...props } />
-		);
-		/* eslint-disable react/no-find-dom-node */
-		wrapperElement = () => ReactDOM.findDOMNode( wrapper );
+		const container = document.createElement( 'div' );
+		const root = createRoot( container );
+		wrapperRef = { current: null };
+		root.render( <TokenFieldWrapper ref={ wrapperRef } { ...props } /> );
+		jest.runAllTimers();
+		wrapperElement = () => container.firstChild;
 		textInputElement = () =>
-			TestUtils.findRenderedDOMComponentWithClass(
-				wrapper,
-				'components-form-token-field__input'
-			);
-		textInputComponent = () =>
-			TestUtils.findRenderedComponentWithType( wrapper, TokenInput );
-		/* eslint-enable react/no-find-dom-node */
+			container.querySelector( '.components-form-token-field__input' );
 		TestUtils.Simulate.focus( textInputElement() );
+		jest.runAllTimers();
 	}
 
 	describe( 'displaying tokens', () => {
 		it( 'should render default tokens', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			jest.runAllTimers();
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should display tokens with escaped special characters properly', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokens: fixtures.specialTokens.textEscaped,
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getTokensHTML() ).toEqual(
 				fixtures.specialTokens.htmlEscaped
 			);
@@ -140,10 +149,11 @@ describe( 'FormTokenField', () => {
 			// worth testing, so we can be sure that token values with
 			// dangerous characters in them don't have these characters carried
 			// through unescaped to the HTML.
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokens: fixtures.specialTokens.textUnescaped,
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getTokensHTML() ).toEqual(
 				fixtures.specialTokens.htmlUnescaped
 			);
@@ -153,9 +163,10 @@ describe( 'FormTokenField', () => {
 	describe( 'suggestions', () => {
 		it( 'should not render suggestions unless we type at least two characters', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).toEqual( [] );
 			setText( 'th' );
 			expect( getSuggestionsText() ).toEqual(
@@ -165,25 +176,28 @@ describe( 'FormTokenField', () => {
 
 		it( 'should show suggestions when when input is empty if expandOnFocus is set to true', () => {
 			setUp( { __experimentalExpandOnFocus: true } );
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).not.toEqual( [] );
 		} );
 
 		it( 'should remove already added tags from suggestions', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokens: Object.freeze( [ 'of', 'and' ] ),
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).not.toEqual( getTokensHTML() );
 		} );
 
 		it( 'suggestions that begin with match are boosted', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			setText( 'so' );
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.matchingSuggestions.so
@@ -192,10 +206,11 @@ describe( 'FormTokenField', () => {
 
 		it( 'should match against the unescaped values of suggestions with special characters', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: fixtures.specialSuggestions.textUnescaped,
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			setText( '& S' );
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.specialSuggestions.matchAmpersandUnescaped
@@ -204,10 +219,11 @@ describe( 'FormTokenField', () => {
 
 		it( 'should match against the unescaped values of suggestions with special characters (including spaces)', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: fixtures.specialSuggestions.textUnescaped,
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			setText( 's &' );
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.specialSuggestions.matchAmpersandSequence
@@ -217,10 +233,11 @@ describe( 'FormTokenField', () => {
 		it( 'should not match against the escaped values of suggestions with special characters', () => {
 			setUp();
 			setText( 'amp' );
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: fixtures.specialSuggestions.textUnescaped,
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.specialSuggestions.matchAmpersandEscaped
 			);
@@ -228,9 +245,10 @@ describe( 'FormTokenField', () => {
 
 		it( 'should match suggestions even with trailing spaces', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			setText( '  at  ' );
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.matchingSuggestions.at
@@ -239,9 +257,10 @@ describe( 'FormTokenField', () => {
 
 		it( 'should manage the selected suggestion based on both keyboard and mouse events', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			setText( 'th' );
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.matchingSuggestions.th
@@ -267,36 +286,41 @@ describe( 'FormTokenField', () => {
 			} );
 
 			TestUtils.Simulate.mouseEnter( hoverSuggestion );
+			jest.runAllTimers();
 			expect( getSelectedSuggestion() ).toEqual( [ 'wi', 'th' ] );
 			sendKeyDown( keyCodes.upArrow );
 			expect( getSelectedSuggestion() ).toEqual( [ 'th', 'is' ] );
 			sendKeyDown( keyCodes.upArrow );
 			expect( getSelectedSuggestion() ).toEqual( [ 'th', 'at' ] );
 			TestUtils.Simulate.click( hoverSuggestion );
+			jest.runAllTimers();
 			expect( getSelectedSuggestion() ).toBe( null );
 			expect( getTokensHTML() ).toEqual( [ 'foo', 'bar', 'with' ] );
 		} );
 
 		it( 'should re-render when suggestions prop has changed', () => {
 			setUp();
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: [],
 				isExpanded: true,
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).toEqual( [] );
 			setText( 'so' );
 			expect( getSuggestionsText() ).toEqual( [] );
 
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: fixtures.specialSuggestions.default,
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).toEqual(
 				fixtures.matchingSuggestions.so
 			);
 
-			wrapper.setState( {
+			wrapperRef.current.setState( {
 				tokenSuggestions: [],
 			} );
+			jest.runAllTimers();
 			expect( getSuggestionsText() ).toEqual( [] );
 		} );
 	} );
@@ -305,57 +329,82 @@ describe( 'FormTokenField', () => {
 		it( 'should not allow adding blank tokens with Tab', () => {
 			setUp();
 			sendKeyDown( keyCodes.tab );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should not allow adding whitespace tokens with Tab', () => {
 			setUp();
 			setText( '   ' );
 			sendKeyDown( keyCodes.tab );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should add a token when Enter pressed', () => {
 			setUp();
 			setText( 'baz' );
 			sendKeyDown( keyCodes.enter );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar', 'baz' ] );
-			const textNode = textInputComponent();
-			expect( textNode.props.value ).toBe( '' );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+				'baz',
+			] );
 		} );
 
 		it( 'should not allow adding blank tokens with Enter', () => {
 			setUp();
 			sendKeyDown( keyCodes.enter );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should not allow adding whitespace tokens with Enter', () => {
 			setUp();
 			setText( '   ' );
 			sendKeyDown( keyCodes.enter );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should not allow adding whitespace tokens with comma', () => {
 			setUp();
 			setText( '   ' );
 			sendKeyPress( charCodes.comma );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 
 		it( 'should add a token when comma pressed', () => {
 			setUp();
 			setText( 'baz' );
 			sendKeyPress( charCodes.comma );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar', 'baz' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+				'baz',
+			] );
 		} );
 
 		it( 'should trim token values when adding', () => {
 			setUp();
 			setText( '  baz  ' );
 			sendKeyDown( keyCodes.enter );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar', 'baz' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+				'baz',
+			] );
 		} );
 
 		it( "should not add values that don't pass the validation", () => {
@@ -364,7 +413,10 @@ describe( 'FormTokenField', () => {
 			} );
 			setText( 'baz' );
 			sendKeyDown( keyCodes.enter );
-			expect( wrapper.state.tokens ).toEqual( [ 'foo', 'bar' ] );
+			expect( wrapperRef.current.state.tokens ).toEqual( [
+				'foo',
+				'bar',
+			] );
 		} );
 	} );
 
@@ -375,7 +427,8 @@ describe( 'FormTokenField', () => {
 				'.components-form-token-field__remove-token'
 			).firstChild;
 			TestUtils.Simulate.click( forClickNode );
-			expect( wrapper.state.tokens ).toEqual( [ 'bar' ] );
+			jest.runAllTimers();
+			expect( wrapperRef.current.state.tokens ).toEqual( [ 'bar' ] );
 		} );
 	} );
 } );
