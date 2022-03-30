@@ -1,6 +1,6 @@
 <?php
 /**
- * Server-side rendering of the `core/categories` block.
+ * Server-side rendering of the `core/cover` block.
  *
  * @package WordPress
  */
