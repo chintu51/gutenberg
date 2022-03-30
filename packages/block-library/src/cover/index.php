@@ -10,7 +10,7 @@
  *
  * @param array $attributes The block attributes.
  *
- * @return string Returns the categories list/dropdown markup.
+ * @return string Returns the cover block markup, if useFeaturedImage is true.
  */
 function render_block_core_cover( $attributes, $content ) {
 	if( false === $attributes['useFeaturedImage'] ) {
