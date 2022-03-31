@@ -6,7 +6,7 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useSelect, useSuspenseSelect, useDispatch } from '@wordpress/data';
 import { useCallback, useRef } from '@wordpress/element';
 import { useEntityBlockEditor, store as coreStore } from '@wordpress/core-data';
 import {
@@ -48,7 +48,7 @@ const LAYOUT = {
 };
 
 export default function BlockEditor( { setIsInserterOpen } ) {
-	const { settings } = useSelect(
+	const { settings } = useSuspenseSelect(
 		( select ) => {
 			let storedSettings = select( editSiteStore ).getSettings(
 				setIsInserterOpen
