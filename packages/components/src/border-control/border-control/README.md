@@ -16,7 +16,7 @@ a "shape" abstraction.
 ## Usage
 
 ```jsx
-import { useState } from 'react';
+import { useState } from '@wordpress/element';
 import { BorderControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
